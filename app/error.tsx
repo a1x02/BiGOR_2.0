@@ -8,6 +8,7 @@ const Error = () => {
     return (
         <div className="h-full flex-col flex items-center justify-center space-y-4">
             <Image
+                alt="Ошибка"
                 src="/error.svg"
                 height="300"
                 width="300"
