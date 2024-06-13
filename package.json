@@ -12,6 +12,7 @@
     "@blocknote/core": "^0.12.4",
     "@blocknote/react": "^0.12.4",
     "@clerk/clerk-react": "^4.30.7",
+    "@defensestation/blocknote-code": "^1.0.4",
     "@edgestore/react": "^0.1.6",
     "@edgestore/server": "^0.1.6",
     "@radix-ui/react-alert-dialog": "^1.0.5",

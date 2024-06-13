@@ -9,10 +9,32 @@ import {
 import { useSettings } from "@/hooks/use-settings";
 import { Label } from "@/components/ui/label";
 import { ModeToggle } from "@/components/mode-toggle";
+import { useEffect, useState } from "react";
 
 export const SettingsModal = () => {
     const settings = useSettings();
+    const toggle = useSettings((store) => store.toggle);
+    const [isMounted, setIsMounted] = useState(false);
 
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    useEffect(() => {
+        const down = (event: KeyboardEvent) => {
+            if ((event.key === "o" || event.key === "O" || event.key === "щ" || event.key === "Щ") && (event.metaKey || event.ctrlKey)) {
+                event.preventDefault();
+                toggle();
+            }
+        }
+
+        document.addEventListener("keydown", down);
+        return () => document.removeEventListener("keydown", down);
+    }, [toggle]);
+
+    if (!isMounted) {
+        return null;
+    }
     
 
     return (
