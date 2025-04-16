@@ -30,72 +30,207 @@ export const WordImportButton = ({
     try {
       setIsLoading(true);
 
-      // Read the Word document
+      // Read the Word document with style information
       const arrayBuffer = await file.arrayBuffer();
-      const result = await mammoth.extractRawText({ arrayBuffer });
-      const text = result.value;
+      const result = await mammoth.convertToHtml({ arrayBuffer });
+      const html = result.value;
 
-      // Split text into blocks based on headings and paragraphs
-      const blocks = text.split(/\n\s*\n/).filter((block) => block.trim());
+      // Create a temporary div to parse HTML
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = html;
+
+      // Process each element
+      const processElement = (element: Element): any => {
+        const blockNoteContent: any[] = [];
+        let currentText = "";
+
+        // Helper function to create a block
+        const createBlock = (type: string, text: string, level?: number) => {
+          if (!text.trim()) return null;
+
+          return {
+            type,
+            props: {
+              textColor: "default",
+              backgroundColor: "default",
+              textAlignment: "left",
+              ...(level && { level }),
+            },
+            content: [
+              {
+                type: "text",
+                text: text.trim(),
+                styles: {},
+              },
+            ],
+            children: [],
+          };
+        };
+
+        // Helper function to check if text is bold
+        const isBold = (element: Element): boolean => {
+          const style = window.getComputedStyle(element);
+          const fontWeight = parseInt(style.fontWeight);
+          return (
+            fontWeight >= 600 ||
+            element.tagName === "STRONG" ||
+            element.tagName === "B"
+          );
+        };
+
+        // Helper function to check if element is standalone (not mixed with normal text)
+        const isStandalone = (element: Element): boolean => {
+          const parent = element.parentElement;
+          if (!parent) return true;
+
+          // Check if parent has only one child (this element)
+          if (parent.childNodes.length === 1) return true;
+
+          // Check if all siblings are also bold
+          const siblings = Array.from(parent.childNodes).filter(
+            (node) => node.nodeType === Node.ELEMENT_NODE
+          ) as Element[];
+
+          return siblings.every((sibling) => isBold(sibling));
+        };
+
+        // Process child nodes
+        for (const node of Array.from(element.childNodes)) {
+          if (node.nodeType === Node.TEXT_NODE) {
+            currentText += node.textContent || "";
+          } else if (node.nodeType === Node.ELEMENT_NODE) {
+            const element = node as Element;
+
+            // If we have accumulated text, create a paragraph block
+            if (currentText.trim()) {
+              const block = createBlock("paragraph", currentText);
+              if (block) blockNoteContent.push(block);
+              currentText = "";
+            }
+
+            // Process different HTML elements
+            if (element.tagName === "H1") {
+              const block = createBlock(
+                "heading",
+                element.textContent || "",
+                1
+              );
+              if (block) blockNoteContent.push(block);
+            } else if (element.tagName === "H2") {
+              const block = createBlock(
+                "heading",
+                element.textContent || "",
+                2
+              );
+              if (block) blockNoteContent.push(block);
+            } else if (element.tagName === "H3") {
+              const block = createBlock(
+                "heading",
+                element.textContent || "",
+                3
+              );
+              if (block) blockNoteContent.push(block);
+            } else if (element.tagName === "P") {
+              // Check if paragraph is entirely bold and standalone
+              if (isBold(element) && isStandalone(element)) {
+                const block = createBlock(
+                  "heading",
+                  element.textContent || "",
+                  3
+                );
+                if (block) blockNoteContent.push(block);
+              } else {
+                // Process mixed content
+                const mixedContent = processElement(element);
+                blockNoteContent.push(...mixedContent);
+              }
+            } else if (element.tagName === "UL") {
+              // Process each list item as a separate bullet list item
+              const listItems = Array.from(element.getElementsByTagName("LI"));
+              for (const item of listItems) {
+                const block = {
+                  type: "bulletListItem",
+                  props: {
+                    textColor: "default",
+                    backgroundColor: "default",
+                    textAlignment: "left",
+                  },
+                  content: [
+                    {
+                      type: "text",
+                      text: item.textContent || "",
+                      styles: {},
+                    },
+                  ],
+                  children: [],
+                };
+                blockNoteContent.push(block);
+              }
+            } else if (element.tagName === "OL") {
+              // Process each list item as a separate numbered list item
+              const listItems = Array.from(element.getElementsByTagName("LI"));
+              for (const item of listItems) {
+                const block = {
+                  type: "numberedListItem",
+                  props: {
+                    textColor: "default",
+                    backgroundColor: "default",
+                    textAlignment: "left",
+                  },
+                  content: [
+                    {
+                      type: "text",
+                      text: item.textContent || "",
+                      styles: {},
+                    },
+                  ],
+                  children: [],
+                };
+                blockNoteContent.push(block);
+              }
+            } else if (isBold(element) && isStandalone(element)) {
+              // Convert standalone bold text to heading
+              const block = createBlock(
+                "heading",
+                element.textContent || "",
+                3
+              );
+              if (block) blockNoteContent.push(block);
+            } else {
+              // Recursively process other elements
+              const childBlocks = processElement(element);
+              blockNoteContent.push(...childBlocks);
+            }
+          }
+        }
+
+        // Add any remaining text as a paragraph
+        if (currentText.trim()) {
+          const block = createBlock("paragraph", currentText);
+          if (block) blockNoteContent.push(block);
+        }
+
+        return blockNoteContent;
+      };
+
+      const blockNoteContent = processElement(tempDiv);
 
       // Create a new document
-      const document = await create({
+      const newDocument = await create({
         title: file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
         parentDocument: parentDocumentId,
       });
 
-      // Convert blocks to BlockNote format
-      const blockNoteContent = blocks.map((block) => {
-        // Check if it's a heading (starts with #)
-        if (block.startsWith("#")) {
-          const level = block.match(/^#+/)?.[0].length || 1;
-          return {
-            type: "heading",
-            props: {
-              textColor: "default",
-              backgroundColor: "default",
-              textAlignment: "left",
-              level: Math.min(level, 3), // Limit to 3 levels
-            },
-            content: [
-              {
-                type: "text",
-                text: block.replace(/^#+\s*/, ""),
-                styles: {},
-              },
-            ],
-            children: [],
-          };
-        } else {
-          return {
-            type: "paragraph",
-            props: {
-              textColor: "default",
-              backgroundColor: "default",
-              textAlignment: "left",
-            },
-            content: [
-              {
-                type: "text",
-                text: block,
-                styles: {},
-              },
-            ],
-            children: [],
-          };
-        }
-      });
-
       // Update the document with the converted content
       await update({
-        id: document,
+        id: newDocument,
         content: JSON.stringify(blockNoteContent),
       });
 
       toast.success("Документ успешно импортирован");
 
       // Navigate to the new document
-      router.push(`/documents/${document}`);
+      router.push(`/documents/${newDocument}`);
     } catch (error) {
       console.error("Error importing Word document:", error);
       toast.error("Ошибка при импорте документа");
