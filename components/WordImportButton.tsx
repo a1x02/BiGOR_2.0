@@ -29,10 +29,9 @@ export const WordImportButton = ({
     const file = acceptedFiles[0];
     if (!file) return;
 
-    let toastId: string | number;
+    const toastId = toast.loading("Импортируем документ...");
     try {
       setIsLoading(true);
-      toastId = toast.loading("Импортируем документ...");
 
       // Read the Word document with style information
       const arrayBuffer = await file.arrayBuffer();
