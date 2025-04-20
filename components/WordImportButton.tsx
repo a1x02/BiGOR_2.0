@@ -112,36 +112,51 @@ export const WordImportButton = ({
             }
 
             // Process different HTML elements
-            if (element.tagName === "H1") {
-              const block = createBlock(
-                "heading",
-                element.textContent || "",
-                1
-              );
-              if (block) blockNoteContent.push(block);
-            } else if (element.tagName === "H2") {
-              const block = createBlock(
-                "heading",
-                element.textContent || "",
-                2
-              );
-              if (block) blockNoteContent.push(block);
-            } else if (element.tagName === "H3") {
-              const block = createBlock(
-                "heading",
-                element.textContent || "",
-                3
-              );
-              if (block) blockNoteContent.push(block);
+            if (
+              element.tagName === "H1" ||
+              element.tagName === "H2" ||
+              element.tagName === "H3"
+            ) {
+              const level = parseInt(element.tagName[1]);
+              const block = {
+                type: "heading",
+                props: {
+                  textColor: "default",
+                  backgroundColor: "default",
+                  textAlignment: "left",
+                  level: level,
+                },
+                content: [
+                  {
+                    type: "text",
+                    text: element.textContent?.trim() || "",
+                    styles: {},
+                  },
+                ],
+                children: [],
+              };
+              blockNoteContent.push(block);
             } else if (element.tagName === "P") {
               // Check if paragraph is entirely bold and standalone
               if (isBold(element) && isStandalone(element)) {
-                const block = createBlock(
-                  "heading",
-                  element.textContent || "",
-                  3
-                );
-                if (block) blockNoteContent.push(block);
+                const block = {
+                  type: "heading",
+                  props: {
+                    textColor: "default",
+                    backgroundColor: "default",
+                    textAlignment: "left",
+                    level: 3,
+                  },
+                  content: [
+                    {
+                      type: "text",
+                      text: element.textContent?.trim() || "",
+                      styles: {},
+                    },
+                  ],
+                  children: [],
+                };
+                blockNoteContent.push(block);
               } else {
                 // Process mixed content
                 const mixedContent = await processElement(element);
