@@ -10,6 +10,7 @@ import { useState } from "react";
 import * as mammoth from "mammoth";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useEdgeStore } from "@/lib/edgestore";
 
 interface WordImportButtonProps {
   parentDocumentId?: Id<"documents">;
@@ -22,13 +23,16 @@ export const WordImportButton = ({
   const create = useMutation(api.documents.create);
   const update = useMutation(api.documents.update);
   const router = useRouter();
+  const { edgestore } = useEdgeStore();
 
   const onDrop = async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (!file) return;
 
+    let toastId: string | number;
     try {
       setIsLoading(true);
+      toastId = toast.loading("Импортируем документ...");
 
       // Read the Word document with style information
       const arrayBuffer = await file.arrayBuffer();
@@ -40,7 +44,7 @@ export const WordImportButton = ({
       tempDiv.innerHTML = html;
 
       // Process each element
-      const processElement = (element: Element): any => {
+      const processElement = async (element: Element): Promise<any> => {
         const blockNoteContent: any[] = [];
         let currentText = "";
 
@@ -141,7 +145,7 @@ export const WordImportButton = ({
                 if (block) blockNoteContent.push(block);
               } else {
                 // Process mixed content
-                const mixedContent = processElement(element);
+                const mixedContent = await processElement(element);
                 blockNoteContent.push(...mixedContent);
               }
             } else if (element.tagName === "UL") {
@@ -188,6 +192,52 @@ export const WordImportButton = ({
                 };
                 blockNoteContent.push(block);
               }
+            } else if (element.tagName === "IMG") {
+              // Process image element
+              const src = element.getAttribute("src");
+              if (src && src.startsWith("data:")) {
+                try {
+                  // Convert base64 to blob
+                  const base64Data = src.split(",")[1];
+                  const byteCharacters = atob(base64Data);
+                  const byteArrays = [];
+                  for (let i = 0; i < byteCharacters.length; i++) {
+                    byteArrays.push(byteCharacters.charCodeAt(i));
+                  }
+                  const byteArray = new Uint8Array(byteArrays);
+                  const blob = new Blob([byteArray], { type: "image/png" });
+                  const imageFile = new File([blob], "image.png", {
+                    type: "image/png",
+                  });
+
+                  // Upload to edgestore
+                  const res = await edgestore.publicFiles.upload({
+                    file: imageFile,
+                    onProgressChange: (progress) => {
+                      toast.loading("Загружаем изображение...", {
+                        id: toastId,
+                      });
+                    },
+                  });
+
+                  // Create image block with edgestore URL
+                  const imageBlock = {
+                    type: "image",
+                    props: {
+                      textColor: "default",
+                      backgroundColor: "default",
+                      textAlignment: "left",
+                      url: res.url,
+                      caption: "",
+                    },
+                    content: [],
+                    children: [],
+                  };
+                  blockNoteContent.push(imageBlock);
+                } catch (error) {
+                  console.error("Error processing image:", error);
+                }
+              }
             } else if (isBold(element) && isStandalone(element)) {
               // Convert standalone bold text to heading
               const block = createBlock(
@@ -198,7 +248,7 @@ export const WordImportButton = ({
               if (block) blockNoteContent.push(block);
             } else {
               // Recursively process other elements
-              const childBlocks = processElement(element);
+              const childBlocks = await processElement(element);
               blockNoteContent.push(...childBlocks);
             }
           }
@@ -213,7 +263,7 @@ export const WordImportButton = ({
         return blockNoteContent;
       };
 
-      const blockNoteContent = processElement(tempDiv);
+      const blockNoteContent = await processElement(tempDiv);
 
       // Create a new document
       const newDocument = await create({
@@ -227,13 +277,13 @@ export const WordImportButton = ({
         content: JSON.stringify(blockNoteContent),
       });
 
-      toast.success("Документ успешно импортирован");
+      toast.success("Документ успешно импортирован", { id: toastId });
 
       // Navigate to the new document
       router.push(`/documents/${newDocument}`);
     } catch (error) {
       console.error("Error importing Word document:", error);
-      toast.error("Ошибка при импорте документа");
+      toast.error("Ошибка при импорте документа", { id: toastId });
     } finally {
       setIsLoading(false);
     }
