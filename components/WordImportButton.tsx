@@ -36,6 +36,7 @@ export const WordImportButton = ({
       // Read the Word document with style information
       const arrayBuffer = await file.arrayBuffer();
       const result = await mammoth.convertToHtml({ arrayBuffer });
+      console.log("HTML from Word:", result.value);
       const html = result.value;
 
       // Create a temporary div to parse HTML
@@ -137,59 +138,102 @@ export const WordImportButton = ({
               };
               blockNoteContent.push(block);
             } else if (element.tagName === "P") {
-              // Check if paragraph is entirely bold and standalone
-              if (isBold(element) && isStandalone(element)) {
+              // Process paragraph content with formatting
+              const processFormattedText = (element: Element): any[] => {
+                const content: any[] = [];
+                let currentText = "";
+                let currentStyles: Record<string, boolean> = {};
+
+                const processNode = (node: Node) => {
+                  if (node.nodeType === Node.TEXT_NODE) {
+                    // Preserve whitespace from text nodes
+                    currentText += node.textContent || "";
+                  } else if (node.nodeType === Node.ELEMENT_NODE) {
+                    const el = node as Element;
+
+                    // Check for formatting tags
+                    const isBold =
+                      el.tagName === "STRONG" || el.tagName === "B";
+                    const isItalic = el.tagName === "EM" || el.tagName === "I";
+                    const isUnderline = el.tagName === "U";
+
+                    // If we have accumulated text with different formatting, add it to content
+                    if (currentText) {
+                      content.push({
+                        type: "text",
+                        text: currentText,
+                        styles: { ...currentStyles },
+                      });
+                      currentText = "";
+                    }
+
+                    // Update current styles based on tag
+                    if (isBold) currentStyles.bold = true;
+                    if (isItalic) currentStyles.italic = true;
+                    if (isUnderline) currentStyles.underline = true;
+
+                    // Process child nodes and collect their text
+                    let formattedText = "";
+                    Array.from(el.childNodes).forEach((child) => {
+                      if (child.nodeType === Node.TEXT_NODE) {
+                        formattedText += child.textContent || "";
+                      } else {
+                        processNode(child);
+                      }
+                    });
+
+                    // Add formatted text if it exists
+                    if (formattedText) {
+                      content.push({
+                        type: "text",
+                        text: formattedText,
+                        styles: { ...currentStyles },
+                      });
+                    }
+
+                    // Reset styles after processing the element
+                    currentStyles = {};
+                  }
+                };
+
+                Array.from(element.childNodes).forEach(processNode);
+
+                // Add any remaining text
+                if (currentText) {
+                  content.push({
+                    type: "text",
+                    text: currentText,
+                    styles: currentStyles,
+                  });
+                }
+
+                return content;
+              };
+
+              const content = processFormattedText(element);
+
+              if (content.length > 0) {
                 const block = {
-                  type: "heading",
+                  type: "paragraph",
                   props: {
                     textColor: "default",
                     backgroundColor: "default",
                     textAlignment: "left",
-                    level: 3,
                   },
-                  content: [
-                    {
-                      type: "text",
-                      text: element.textContent?.trim() || "",
-                      styles: {},
-                    },
-                  ],
-                  children: [],
-                };
-                blockNoteContent.push(block);
-              } else {
-                // Process mixed content
-                const mixedContent = await processElement(element);
-                blockNoteContent.push(...mixedContent);
-              }
-            } else if (element.tagName === "UL") {
-              // Process each list item as a separate bullet list item
-              const listItems = Array.from(element.getElementsByTagName("LI"));
-              for (const item of listItems) {
-                const block = {
-                  type: "bulletListItem",
-                  props: {
-                    textColor: "default",
-                    backgroundColor: "default",
-                    textAlignment: "left",
-                  },
-                  content: [
-                    {
-                      type: "text",
-                      text: item.textContent || "",
-                      styles: {},
-                    },
-                  ],
+                  content: content,
                   children: [],
                 };
                 blockNoteContent.push(block);
               }
-            } else if (element.tagName === "OL") {
-              // Process each list item as a separate numbered list item
+            } else if (element.tagName === "UL" || element.tagName === "OL") {
+              // Process list items
               const listItems = Array.from(element.getElementsByTagName("LI"));
               for (const item of listItems) {
                 const block = {
-                  type: "numberedListItem",
+                  type:
+                    element.tagName === "UL"
+                      ? "bulletListItem"
+                      : "numberedListItem",
                   props: {
                     textColor: "default",
                     backgroundColor: "default",
@@ -254,16 +298,24 @@ export const WordImportButton = ({
               }
             } else if (isBold(element) && isStandalone(element)) {
               // Convert standalone bold text to heading
-              const block = createBlock(
-                "heading",
-                element.textContent || "",
-                3
-              );
-              if (block) blockNoteContent.push(block);
-            } else {
-              // Recursively process other elements
-              const childBlocks = await processElement(element);
-              blockNoteContent.push(...childBlocks);
+              const block = {
+                type: "heading",
+                props: {
+                  textColor: "default",
+                  backgroundColor: "default",
+                  textAlignment: "left",
+                  level: 3,
+                },
+                content: [
+                  {
+                    type: "text",
+                    text: element.textContent?.trim() || "",
+                    styles: {},
+                  },
+                ],
+                children: [],
+              };
+              blockNoteContent.push(block);
             }
           }
         }
