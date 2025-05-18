@@ -3,7 +3,7 @@
 import { Doc } from "@/convex/_generated/dataModel";
 import { IconPicker } from "./IconPicker";
 import { Button } from "@/components/ui/button";
-import { ImageIcon, Smile, X, FileText } from "lucide-react";
+import { ImageIcon, Smile, X, FileText, SquareFunction } from "lucide-react";
 import { ElementRef, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -23,6 +23,7 @@ export const Toolbar = ({ initialData, preview }: ToolbarProps) => {
 
   const update = useMutation(api.documents.update);
   const removeIcon = useMutation(api.documents.removeIcon);
+  const addFormula = useMutation(api.documents.addFormula);
 
   const coverImage = useCoverImage();
 
@@ -63,6 +64,15 @@ export const Toolbar = ({ initialData, preview }: ToolbarProps) => {
   const onIconRemove = () => {
     removeIcon({
       id: initialData._id,
+    });
+  };
+
+  const onAddFormula = () => {
+    const position = initialData.formulas?.length || 0;
+    addFormula({
+      documentId: initialData._id,
+      formula: "",
+      position,
     });
   };
 
@@ -116,7 +126,20 @@ export const Toolbar = ({ initialData, preview }: ToolbarProps) => {
             Добавить обложку
           </Button>
         )}
-        {!preview && <WordImportButton parentDocumentId={initialData._id} />}
+        {!preview && (
+          <>
+            <WordImportButton parentDocumentId={initialData._id} />
+            <Button
+              onClick={onAddFormula}
+              className="text-muted-foreground text-xs"
+              variant="outline"
+              size="sm"
+            >
+              <SquareFunction className="h-4 w-4 mr-2" />
+              Добавить формулу
+            </Button>
+          </>
+        )}
       </div>
       {isEditing && !preview ? (
         <TextareaAutosize
