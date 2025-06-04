@@ -23,4 +23,10 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_parent", ["userId", "parentDocument"]),
+
+  dictionary: defineTable({
+    word: v.string(),
+    userId: v.string(),
+  })
+    .index("by_user", ["userId"]),
 });

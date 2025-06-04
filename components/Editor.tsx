@@ -20,6 +20,7 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { FormulaBlock } from "./FormulaBlock";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface EditorProps {
   onChange: (value: string) => void;
@@ -46,6 +47,7 @@ const Editor = ({
   const { edgestore } = useEdgeStore();
   const addFormula = useMutation(api.documents.addFormula);
   const removeFormula = useMutation(api.documents.removeFormula);
+  const { highlightTerms } = useDictionary();
 
   const handleUpload = async (file: File) => {
     const response = await edgestore.publicFiles.upload({
@@ -80,50 +82,33 @@ const Editor = ({
     });
   };
 
+  const handleChange = () => {
+    const content = editor.document;
+    const updatedContent = content.map(block => highlightTerms(block));
+    onChange(JSON.stringify(updatedContent, null, 2));
+  };
+
   return (
     <div>
       <BlockNoteView
         editor={editor}
         theme={resolvedTheme === "dark" ? "dark" : "light"}
         formattingToolbar={false}
-        onChange={() => {
-          onChange(JSON.stringify(editor.document, null, 2));
-        }}
+        onChange={handleChange}
         editable={editable}
       >
         <FormattingToolbarController
           formattingToolbar={() => (
             <FormattingToolbar>
-              <BlockTypeSelect key={"blockTypeSelect"} />
-
-              {/* Extra button to toggle blue text & background */}
-
-              <ImageCaptionButton key={"imageCaptionButton"} />
-              <ReplaceImageButton key={"replaceImageButton"} />
-
-              <BasicTextStyleButton
-                basicTextStyle={"bold"}
-                key={"boldStyleButton"}
-              />
-              <BasicTextStyleButton
-                basicTextStyle={"italic"}
-                key={"italicStyleButton"}
-              />
-              <BasicTextStyleButton
-                basicTextStyle={"underline"}
-                key={"underlineStyleButton"}
-              />
-              <BasicTextStyleButton
-                basicTextStyle={"strike"}
-                key={"strikeStyleButton"}
-              />
-              {/* Extra button to toggle code styles */}
-              <BasicTextStyleButton
-                key={"codeStyleButton"}
-                basicTextStyle={"code"}
-              />
-
-              <CreateLinkButton key={"createLinkButton"} />
+              <BlockTypeSelect />
+              <ImageCaptionButton />
+              <ReplaceImageButton />
+              <BasicTextStyleButton basicTextStyle="bold" />
+              <BasicTextStyleButton basicTextStyle="italic" />
+              <BasicTextStyleButton basicTextStyle="underline" />
+              <BasicTextStyleButton basicTextStyle="strike" />
+              <BasicTextStyleButton basicTextStyle="code" />
+              <CreateLinkButton />
             </FormattingToolbar>
           )}
         />
@@ -132,7 +117,6 @@ const Editor = ({
       {documentId &&
         formulas.map((formula) => (
           <FormulaBlock
-            key={formula.id}
             documentId={documentId}
             formulaId={formula.id}
             initialFormula={formula.formula}

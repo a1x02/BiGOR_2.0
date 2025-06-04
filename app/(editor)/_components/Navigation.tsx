@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, ChevronsLeft, MenuIcon, Plus, PlusCircle, Search, Settings, Trash } from "lucide-react";
+import { Archive, ChevronsLeft, MenuIcon, Plus, PlusCircle, Search, Settings, Trash, BookOpen } from "lucide-react";
 import { ElementRef, useEffect, useRef, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { useParams, usePathname, useRouter } from "next/navigation";
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/popover"
 import { TrashBox } from "./TrashBox";
 import { Navbar } from "./Navbar";
+import { DictionaryBox } from "./DictionaryBox";
 
 const Navigation = () => {
     const search = useSearch();
@@ -170,6 +171,20 @@ const Navigation = () => {
                         icon={Plus}
                         label="Добавить документ"
                     />
+                    <Popover>
+                        <PopoverTrigger className="w-full mt-4">
+                            <Item 
+                                label="Словарь"
+                                icon={BookOpen}
+                            />
+                        </PopoverTrigger>
+                        <PopoverContent 
+                            side={isMobile ? "bottom" : "right"}
+                            className="p-0 w-72"
+                        >
+                            <DictionaryBox />
+                        </PopoverContent>
+                    </Popover>
                     <Popover>
                         <PopoverTrigger className="w-full mt-4">
                             <Item label="Архив" icon={Archive} />
