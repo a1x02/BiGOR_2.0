@@ -1,44 +1,99 @@
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { DefaultBlockSchema, DefaultInlineContentSchema, PartialBlock } from "@blocknote/core";
+import { toast } from "sonner";
+import { Id } from "@/convex/_generated/dataModel";
+
+interface ContentItem {
+  type: string;
+  text: string;
+  styles: Record<string, any>;
+}
+
+interface Block {
+  content: ContentItem[];
+  [key: string]: any;
+}
 
 export const useDictionary = () => {
-    const words = useQuery(api.dictionary.getWords) || [];
+  const words = useQuery(api.dictionary.getWords) || [];
+  const addWord = useMutation(api.dictionary.addWord);
+  const updateWord = useMutation(api.dictionary.updateWord);
+  const deleteWord = useMutation(api.dictionary.deleteWord);
 
-    const highlightTerms = (block: PartialBlock<DefaultBlockSchema, DefaultInlineContentSchema>) => {
-        if (!block.content || !words.length) return block;
+  const processBlock = (block: Block, words: any[]) => {
+    if (!block.content || !words.length) return block;
 
-        const updatedContent = block.content.map(contentItem => {
-            if (contentItem.type === "text") {
-                let text = contentItem.text;
-                let styles = { ...contentItem.styles };
+    // Проверяем, что content является массивом
+    if (!Array.isArray(block.content)) return block;
 
-                words.forEach(({ word }) => {
-                    const regex = new RegExp(`\\b${word}\\b`, 'gi');
-                    if (regex.test(text)) {
-                        styles = {
-                            ...styles,
-                            backgroundColor: "yellow"
-                        };
-                    }
-                });
+    const updatedContent = block.content.map((contentItem: ContentItem) => {
+      if (contentItem.type === "text") {
+        let text = contentItem.text;
+        let styles = { ...contentItem.styles };
 
-                return {
-                    ...contentItem,
-                    styles
-                };
-            }
-            return contentItem;
+        words.forEach((word) => {
+          const regex = new RegExp(`\\b${word.word}\\b`, "gi");
+          if (regex.test(text)) {
+            text = text.replace(regex, (match: string) => {
+              styles = {
+                ...styles,
+                backgroundColor: "yellow",
+                textDecoration: "underline",
+                textDecorationColor: "blue",
+                textDecorationStyle: "dotted",
+              };
+              return match;
+            });
+          }
         });
 
         return {
-            ...block,
-            content: updatedContent
+          ...contentItem,
+          text,
+          styles,
         };
-    };
+      }
+      return contentItem;
+    });
 
     return {
-        words,
-        highlightTerms
+      ...block,
+      content: updatedContent,
     };
-}; 
+  };
+
+  const onAddWord = async (word: string) => {
+    try {
+      await addWord({ word });
+      toast.success("Термин добавлен");
+    } catch (error) {
+      toast.error("Ошибка при добавлении термина");
+    }
+  };
+
+  const onUpdateWord = async (id: Id<"dictionary">, word: string) => {
+    try {
+      await updateWord({ id, word });
+      toast.success("Термин обновлен");
+    } catch (error) {
+      toast.error("Ошибка при обновлении термина");
+    }
+  };
+
+  const onDeleteWord = async (id: Id<"dictionary">) => {
+    try {
+      await deleteWord({ id });
+      toast.success("Термин удален");
+    } catch (error) {
+      toast.error("Ошибка при удалении термина");
+    }
+  };
+
+  return {
+    words,
+    onAddWord,
+    onUpdateWord,
+    onDeleteWord,
+    processBlock,
+  };
+};
