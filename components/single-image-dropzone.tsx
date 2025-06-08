@@ -13,12 +13,14 @@ interface SingleImageDropzoneProps {
   value?: string;
   onChange?: (value?: string) => void;
   disabled?: boolean;
+  className?: string;
 }
 
 export const SingleImageDropzone = ({
   value,
   onChange,
   disabled,
+  className,
 }: SingleImageDropzoneProps) => {
   const { edgestore } = useEdgeStore();
 
@@ -54,39 +56,38 @@ export const SingleImageDropzone = ({
       {...getRootProps()}
       className={cn(
         "w-full outline-none",
-        disabled && "cursor-not-allowed opacity-50"
+        disabled && "cursor-not-allowed opacity-50",
+        className
       )}
     >
       <input {...getInputProps()} />
-      <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-md">
-        {value ? (
-          <div className="relative w-full h-full">
-            <Image
-              fill
-              className="object-cover rounded-md"
-              alt="Upload"
-              src={value}
-            />
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                onChange?.(undefined);
-              }}
-              className="absolute top-2 right-2 h-auto w-auto p-1.5"
-              variant="ghost"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center gap-y-2">
-            <ImagePlus className="h-10 w-10 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              Нажмите или перетащите изображение
-            </p>
-          </div>
-        )}
-      </div>
+      {value ? (
+        <div className="relative w-full h-full">
+          <Image
+            fill
+            className="object-cover rounded-md"
+            alt="Upload"
+            src={value}
+          />
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange?.(undefined);
+            }}
+            className="absolute top-2 right-2 h-auto w-auto p-1.5"
+            variant="ghost"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center gap-y-2">
+          <ImagePlus className="h-10 w-10 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">
+            Нажмите или перетащите изображение
+          </p>
+        </div>
+      )}
     </div>
   );
 };
