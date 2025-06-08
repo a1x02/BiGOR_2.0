@@ -84,7 +84,7 @@ const Editor = ({
 
   const handleChange = () => {
     const content = editor.document;
-    const updatedContent = content.map(block => highlightTerms(block));
+    const updatedContent = content.map((block) => highlightTerms(block));
     onChange(JSON.stringify(updatedContent, null, 2));
   };
 
@@ -117,6 +117,7 @@ const Editor = ({
       {documentId &&
         formulas.map((formula) => (
           <FormulaBlock
+            key={formula.id}
             documentId={documentId}
             formulaId={formula.id}
             initialFormula={formula.formula}
