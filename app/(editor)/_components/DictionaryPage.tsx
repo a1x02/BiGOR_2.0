@@ -81,16 +81,19 @@ export const DictionaryPage = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center gap-x-1 p-2">
-        <Search className="h-4 w-4" />
+      <h1 className="text-5xl font-bold mx-[10%] mt-12 my-2 p-2 text-[#006CDC]">
+        Словарь терминов
+      </h1>
+      <div className="flex items-center gap-x-1 p-2 mx-[10%]">
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           className="h-7 px-2 focus-visible:ring-transparent bg-secondary"
           placeholder="Поиск терминов"
         />
+        <Search className="h-4 w-4" />
       </div>
-      <div className="flex gap-x-2 p-2">
+      <div className="flex gap-x-2 p-2 mx-[10%]">
         <Input
           placeholder="Введите термин"
           value={newWord}
@@ -98,11 +101,15 @@ export const DictionaryPage = () => {
           onKeyDown={handleKeyPress}
           className="focus-visible:ring-0 focus-visible:ring-offset-0"
         />
-        <Button size="sm" onClick={handleAddWord}>
+        <Button
+          size="sm"
+          className="bg-[#006CDC] text-white"
+          onClick={handleAddWord}
+        >
           <Plus className="h-4 w-4" />
         </Button>
       </div>
-      <div className="space-y-2 p-2 max-h-full overflow-y-auto">
+      <div className="space-y-2 mx-[10%] mb-4 p-2 max-h-full overflow-y-auto">
         {filteredWords.length === 0 && (
           <p className="text-xs text-center text-muted-foreground pb-2">
             Ничего не нашлось
