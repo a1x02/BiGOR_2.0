@@ -47,7 +47,7 @@ const Editor = ({
   const { edgestore } = useEdgeStore();
   const addFormula = useMutation(api.documents.addFormula);
   const removeFormula = useMutation(api.documents.removeFormula);
-  const { highlightTerms } = useDictionary();
+  const { processBlock, words } = useDictionary();
 
   const handleUpload = async (file: File) => {
     const response = await edgestore.publicFiles.upload({
@@ -84,7 +84,14 @@ const Editor = ({
 
   const handleChange = () => {
     const content = editor.document;
-    const updatedContent = content.map((block) => highlightTerms(block));
+    const updatedContent = content.map((block) => {
+      try {
+        return processBlock(block, words);
+      } catch (error) {
+        console.error("Error processing block:", error);
+        return block;
+      }
+    });
     onChange(JSON.stringify(updatedContent, null, 2));
   };
 

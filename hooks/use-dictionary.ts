@@ -2,6 +2,11 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { Id } from "@/convex/_generated/dataModel";
+import {
+  DefaultBlockSchema,
+  DefaultInlineContentSchema,
+  PartialBlock,
+} from "@blocknote/core";
 
 interface ContentItem {
   type: string;
@@ -9,10 +14,7 @@ interface ContentItem {
   styles: Record<string, any>;
 }
 
-interface Block {
-  content: ContentItem[];
-  [key: string]: any;
-}
+type Block = PartialBlock<DefaultBlockSchema, DefaultInlineContentSchema>;
 
 export const useDictionary = () => {
   const words = useQuery(api.dictionary.getWords) || [];
@@ -26,7 +28,7 @@ export const useDictionary = () => {
     // Проверяем, что content является массивом
     if (!Array.isArray(block.content)) return block;
 
-    const updatedContent = block.content.map((contentItem: ContentItem) => {
+    const updatedContent = block.content.map((contentItem: any) => {
       if (contentItem.type === "text") {
         let text = contentItem.text;
         let styles = { ...contentItem.styles };
