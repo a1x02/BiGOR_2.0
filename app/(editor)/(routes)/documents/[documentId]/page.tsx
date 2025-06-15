@@ -7,7 +7,7 @@ import { Toolbar } from "@/components/Toolbar";
 import { Cover } from "@/components/Cover";
 import { Skeleton } from "@/components/ui/skeleton";
 import dynamic from "next/dynamic";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 
 interface DocumentIdPageProps {
   params: {
@@ -23,6 +23,7 @@ const DocumentIdPage = ({ params }: DocumentIdPageProps) => {
   const document = useQuery(api.documents.getById, {
     documentId: params.documentId,
   });
+  const editorRef = useRef<HTMLDivElement>(null);
 
   const update = useMutation(api.documents.update);
 
@@ -31,6 +32,14 @@ const DocumentIdPage = ({ params }: DocumentIdPageProps) => {
       id: params.documentId,
       content,
     });
+  };
+
+  const handleHighlightTerms = () => {
+    const editor = editorRef.current?.querySelector(".bn-editor");
+    if (editor) {
+      const event = new Event("change");
+      editor.dispatchEvent(event);
+    }
   };
 
   if (document === undefined) {
@@ -57,13 +66,19 @@ const DocumentIdPage = ({ params }: DocumentIdPageProps) => {
     <div className="pb-40">
       <Cover url={document.coverImage} />
       <div className="md:max-w-3xl lg:max-w-4xl mx-auto">
-        <Toolbar initialData={document} />
-        <Editor
-          onChange={onChange}
-          initialContent={document.content}
-          documentId={document._id}
-          formulas={document.formulas}
+        <Toolbar
+          initialData={document}
+          onHighlightTerms={handleHighlightTerms}
         />
+        <div ref={editorRef}>
+          <Editor
+            onChange={onChange}
+            initialContent={document.content}
+            documentId={document._id}
+            formulas={document.formulas}
+            onHighlightTerms={handleHighlightTerms}
+          />
+        </div>
       </div>
     </div>
   );

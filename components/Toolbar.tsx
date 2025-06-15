@@ -3,7 +3,14 @@
 import { Doc } from "@/convex/_generated/dataModel";
 import { IconPicker } from "./IconPicker";
 import { Button } from "@/components/ui/button";
-import { ImageIcon, Smile, X, FileText, SquareFunction } from "lucide-react";
+import {
+  ImageIcon,
+  Smile,
+  X,
+  FileText,
+  SquareFunction,
+  BookOpen,
+} from "lucide-react";
 import { ElementRef, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -14,9 +21,14 @@ import { WordImportButton } from "./WordImportButton";
 interface ToolbarProps {
   initialData: Doc<"documents">;
   preview?: boolean;
+  onHighlightTerms?: () => void;
 }
 
-export const Toolbar = ({ initialData, preview }: ToolbarProps) => {
+export const Toolbar = ({
+  initialData,
+  preview,
+  onHighlightTerms,
+}: ToolbarProps) => {
   const inputRef = useRef<ElementRef<"textarea">>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(initialData.title);
@@ -80,20 +92,20 @@ export const Toolbar = ({ initialData, preview }: ToolbarProps) => {
     <div className="pl-[54px] group relative">
       {!!initialData.icon && !preview && (
         <div className="flex items-center gap-x-2 group/icon pt-6">
-          <IconPicker onChange={onIconSelect} asChild>
+          <IconPicker asChild onChange={onIconSelect}>
             <Button
-              className="text-xs text-muted-foreground"
+              className="text-muted-foreground text-xs"
               variant="outline"
-              size="icon"
+              size="sm"
             >
-              <p className="text-5xl">{initialData.icon}</p>
+              <p className="font-normal">{initialData.icon}</p>
             </Button>
           </IconPicker>
           <Button
             onClick={onIconRemove}
-            className="text-xs text-muted-foreground"
+            className="text-muted-foreground text-xs"
             variant="outline"
-            size="icon"
+            size="sm"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -137,6 +149,15 @@ export const Toolbar = ({ initialData, preview }: ToolbarProps) => {
             >
               <SquareFunction className="h-4 w-4 mr-2" />
               Добавить формулу
+            </Button>
+            <Button
+              onClick={onHighlightTerms}
+              className="text-muted-foreground text-xs"
+              variant="outline"
+              size="sm"
+            >
+              <BookOpen className="h-4 w-4 mr-2" />
+              Найти термины
             </Button>
           </>
         )}

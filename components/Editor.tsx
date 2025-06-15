@@ -21,6 +21,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { FormulaBlock } from "./FormulaBlock";
 import { useDictionary } from "@/hooks/use-dictionary";
+import { useState, useEffect } from "react";
 
 interface EditorProps {
   onChange: (value: string) => void;
@@ -33,6 +34,7 @@ interface EditorProps {
     position: number;
   }>;
   preview?: boolean;
+  onHighlightTerms?: () => void;
 }
 
 const Editor = ({
@@ -42,12 +44,14 @@ const Editor = ({
   documentId,
   formulas = [],
   preview,
+  onHighlightTerms,
 }: EditorProps) => {
   const { resolvedTheme } = useTheme();
   const { edgestore } = useEdgeStore();
   const addFormula = useMutation(api.documents.addFormula);
   const removeFormula = useMutation(api.documents.removeFormula);
-  const { processBlock, words } = useDictionary();
+  const { words } = useDictionary();
+  const [shouldHighlightTerms, setShouldHighlightTerms] = useState(false);
 
   const handleUpload = async (file: File) => {
     const response = await edgestore.publicFiles.upload({
@@ -84,16 +88,62 @@ const Editor = ({
 
   const handleChange = () => {
     const content = editor.document;
-    const updatedContent = content.map((block) => {
-      try {
-        return processBlock(block, words);
-      } catch (error) {
-        console.error("Error processing block:", error);
-        return block;
+    onChange(JSON.stringify(content, null, 2));
+  };
+
+  const handleHighlightTerms = () => {
+    setShouldHighlightTerms(!shouldHighlightTerms);
+
+    const blocks = editor.document;
+    console.log("Current blocks:", blocks);
+    console.log("Dictionary words:", words);
+
+    blocks.forEach((block) => {
+      if (block.content && Array.isArray(block.content)) {
+        const content = block.content[0];
+        if (content && content.type === "text") {
+          const text = content.text;
+          console.log("Processing text:", text);
+          const styles = { ...content.styles };
+
+          if (!shouldHighlightTerms) {
+            // Apply highlighting
+            words.forEach((word) => {
+              const regex = new RegExp(`\\b${word.word}\\b`, "gi");
+              if (regex.test(text)) {
+                console.log("Found match for word:", word.word);
+                styles.underline = true;
+                styles.textColor = "blue";
+              }
+            });
+          } else {
+            // Remove highlighting
+            styles.underline = false;
+            styles.textColor = undefined;
+          }
+
+          console.log("Applying styles:", styles);
+          editor.updateBlock(block, {
+            content: [
+              {
+                type: "text",
+                text,
+                styles,
+              },
+            ],
+          });
+        }
       }
     });
-    onChange(JSON.stringify(updatedContent, null, 2));
+
+    handleChange();
   };
+
+  useEffect(() => {
+    if (onHighlightTerms) {
+      onHighlightTerms();
+    }
+  }, [shouldHighlightTerms, onHighlightTerms]);
 
   return (
     <div>
