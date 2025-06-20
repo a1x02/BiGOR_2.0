@@ -4,20 +4,20 @@
 
 ```mermaid
 graph TB
-    subgraph "Frontend Layer"
+    subgraph "Клиентский слой"
         A[Next.js App] --> B[Модуль редактора]
         A --> C[Публичный модуль]
         A --> D[Модуль студентов]
         A --> E[Общие компоненты]
     end
 
-    subgraph "Backend Layer"
+    subgraph "Серверный слой"
         F[Convex Functions] --> G[База данных - Documents]
         F --> H[Файловое хранилище]
         F --> I[Аутентификация]
     end
 
-    subgraph "External Services"
+    subgraph "Дополнительные сервисы"
         J[Clerk Auth]
         K[EdgeStore]
         L[Vercel Hosting]
