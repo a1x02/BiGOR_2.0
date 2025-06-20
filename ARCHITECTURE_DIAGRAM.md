@@ -5,16 +5,16 @@
 ```mermaid
 graph TB
     subgraph "Frontend Layer"
-        A[Next.js App] --> B[Editor Module - УЖЕ РЕАЛИЗОВАН]
-        A --> C[Public Module - НОВЫЙ]
-        A --> D[Student Module - НОВЫЙ]
-        A --> E[Shared Components]
+        A[Next.js App] --> B[Модуль редактора]
+        A --> C[Публичный модуль]
+        A --> D[Модуль студентов]
+        A --> E[Общие компоненты]
     end
 
     subgraph "Backend Layer"
-        F[Convex Functions] --> G[Database - Documents]
-        F --> H[File Storage]
-        F --> I[Authentication]
+        F[Convex Functions] --> G[База данных - Documents]
+        F --> H[Файловое хранилище]
+        F --> I[Аутентификация]
     end
 
     subgraph "External Services"
@@ -194,32 +194,32 @@ sequenceDiagram
 
 ```mermaid
 graph LR
-    subgraph "Editor Module - УЖЕ РЕАЛИЗОВАН"
-        A1[Document Creator]
-        A2[BlockNote Editor]
-        A3[Document Manager]
-        A4[Publish/Archive]
+    subgraph "Модуль редактора"
+        A1[Создание документов]
+        A2[BlockNote редактор]
+        A3[Управление документами]
+        A4[Публикация/архивация]
     end
 
-    subgraph "Public Module - НОВЫЙ"
-        B1[Course Catalog]
-        B2[Lecture Viewer]
-        B3[Search & Filter]
-        B4[Guest Access]
+    subgraph "Публичный модуль"
+        B1[Каталог курсов]
+        B2[Просмотр лекций]
+        B3[Поиск и фильтрация]
+        B4[Гостевой доступ]
     end
 
-    subgraph "Student Module - НОВЫЙ"
-        C1[Profile Management]
-        C2[Collection Builder]
-        C3[Progress Tracker]
-        C4[Learning Dashboard]
+    subgraph "Модуль студентов"
+        C1[Управление профилем]
+        C2[Создание коллекций]
+        C3[Отслеживание прогресса]
+        C4[Учебная панель]
     end
 
-    subgraph "Shared Components"
-        D1[Authentication]
-        D2[Navigation]
-        D3[UI Components]
-        D4[File Upload]
+    subgraph "Общие компоненты"
+        D1[Аутентификация]
+        D2[Навигация]
+        D3[UI компоненты]
+        D4[Загрузка файлов]
     end
 
     A1 --> D1
@@ -238,9 +238,9 @@ graph LR
 flowchart TD
     A[Пользователь] --> B{Тип пользователя?}
 
-    B -->|Редактор| C[Editor Module - УЖЕ РЕАЛИЗОВАН]
-    B -->|Студент| D[Student Module - НОВЫЙ]
-    B -->|Гость| E[Public Module - НОВЫЙ]
+    B -->|Редактор| C[Модуль редактора]
+    B -->|Студент| D[Модуль студентов]
+    B -->|Гость| E[Публичный модуль]
 
     C --> F[Создание документов]
     C --> G[Редактирование с BlockNote]
@@ -284,22 +284,22 @@ graph TB
         B --> C[Редактор]
     end
 
-    subgraph "Функции гостя - НОВЫЕ"
+    subgraph "Функции гостя"
         D[Просмотр опубликованных курсов]
         E[Чтение опубликованных лекций]
         F[Поиск контента]
         G[Фильтрация по категориям]
     end
 
-    subgraph "Дополнительные функции студента - НОВЫЕ"
+    subgraph "Дополнительные функции студента"
         H[Создание профиля]
         I[Создание коллекций]
-        J[Добавление лекций в коллекции]
+        J[Добавление лекций в коллекцию]
         K[Отслеживание прогресса]
         L[Персональные настройки]
     end
 
-    subgraph "Функции редактора - УЖЕ РЕАЛИЗОВАНЫ"
+    subgraph "Функции редактора"
         M[Создание документов-курсов]
         N[Редактирование с BlockNote]
         O[Публикация контента]
@@ -376,24 +376,24 @@ graph TB
 
 ```mermaid
 flowchart LR
-    subgraph "Course Creation - УЖЕ РЕАЛИЗОВАНО"
-        A1[Editor Login] --> A2[Create Document (Course)]
-        A2 --> A3[Add Child Documents (Lectures)]
-        A3 --> A4[Edit with BlockNote]
-        A4 --> A5[Publish Course]
+    subgraph "Создание курса"
+        A1[Вход редактора] --> A2[Создание документа-курса]
+        A2 --> A3[Добавление вложенных документов-лекций]
+        A3 --> A4[Редактирование с BlockNote]
+        A4 --> A5[Публикация курса]
     end
 
-    subgraph "Course Discovery - НОВЫЙ"
-        B1[Guest Access] --> B2[Browse Published Courses]
-        B2 --> B3[View Course Details]
-        B3 --> B4[Read Published Lectures]
+    subgraph "Обнаружение курса"
+        B1[Гостевой доступ] --> B2[Просмотр опубликованных курсов]
+        B2 --> B3[Просмотр деталей курса]
+        B3 --> B4[Чтение опубликованных лекций]
     end
 
-    subgraph "Student Learning - НОВЫЙ"
-        C1[Student Login] --> C2[Create Collection]
-        C2 --> C3[Add Lectures to Collection]
-        C3 --> C4[Study Progress]
-        C4 --> C5[Track Completion]
+    subgraph "Обучение студента"
+        C1[Вход студента] --> C2[Создание коллекции]
+        C2 --> C3[Добавление лекций в коллекцию]
+        C3 --> C4[Прогресс обучения]
+        C4 --> C5[Отслеживание завершения]
     end
 
     A5 --> B1
@@ -408,7 +408,7 @@ graph TB
     subgraph "Client Side"
         A[Next.js App]
         B[React Components]
-        C[BlockNote Editor - УЖЕ РЕАЛИЗОВАН]
+        C[BlockNote Editor]
         D[Tailwind CSS]
     end
 
@@ -527,11 +527,11 @@ graph TD
     end
 
     subgraph "Пример структуры"
-        D[Курс: "Основы программирования"] --> E[Лекция 1: "Введение в Python"]
-        D --> F[Лекция 2: "Переменные и типы данных"]
-        D --> G[Лекция 3: "Условия и циклы"]
-        E --> H[Подлекция 1.1: "Установка Python"]
-        E --> I[Подлекция 1.2: "Первая программа"]
+        D[Курс: Основы программирования] --> E[Лекция 1: Введение в Python]
+        D --> F[Лекция 2: Переменные и типы данных]
+        D --> G[Лекция 3: Условия и циклы]
+        E --> H[Подлекция 1.1: Установка Python]
+        E --> I[Подлекция 1.2: Первая программа]
     end
 
     subgraph "Поля документов"
