@@ -5,14 +5,14 @@
 ```mermaid
 graph TB
     subgraph "Frontend Layer"
-        A[Next.js App] --> B[Editor Module]
-        A --> C[Public Module]
-        A --> D[Student Module]
+        A[Next.js App] --> B[Editor Module - УЖЕ РЕАЛИЗОВАН]
+        A --> C[Public Module - НОВЫЙ]
+        A --> D[Student Module - НОВЫЙ]
         A --> E[Shared Components]
     end
 
     subgraph "Backend Layer"
-        F[Convex Functions] --> G[Database]
+        F[Convex Functions] --> G[Database - Documents]
         F --> H[File Storage]
         F --> I[Authentication]
     end
@@ -31,7 +31,7 @@ graph TB
     A --> L
 ```
 
-## Структура базы данных
+## Структура базы данных (ОБНОВЛЕННАЯ)
 
 ```mermaid
 erDiagram
@@ -40,42 +40,20 @@ erDiagram
         string title
         string userId FK
         boolean isArchived
-        string parentDocument FK
+        string parentDocument FK "null=курс, courseId=лекция"
         string content
         string coverImage
         string icon
         boolean isPublished
         array formulas
-    }
-
-    COURSES {
-        string _id PK
-        string title
-        string description
-        string authorId FK
-        string coverImage
-        boolean isPublished
-        boolean isArchived
-        string category
-        string difficulty
-        number estimatedDuration
-        array tags
-        number createdAt
-        number updatedAt
-    }
-
-    LECTURES {
-        string _id PK
-        string title
-        string content
-        string courseId FK
-        number order
-        number duration
-        boolean isPublished
-        boolean isArchived
-        array attachments
-        number createdAt
-        number updatedAt
+        string description "для курсов"
+        string category "для курсов"
+        string difficulty "для курсов"
+        number estimatedDuration "для курсов"
+        array tags "для курсов"
+        number order "для лекций"
+        number duration "для лекций"
+        array attachments "для лекций"
     }
 
     STUDENTS {
@@ -101,7 +79,7 @@ erDiagram
     COLLECTION_LECTURES {
         string _id PK
         string collectionId FK
-        string lectureId FK
+        string lectureId FK "ссылка на documents"
         number order
         number addedAt
     }
@@ -109,7 +87,7 @@ erDiagram
     COURSE_ENROLLMENTS {
         string _id PK
         string studentId FK
-        string courseId FK
+        string courseId FK "ссылка на documents"
         number enrolledAt
         number completedAt
         number progress
@@ -118,7 +96,7 @@ erDiagram
     LECTURE_PROGRESS {
         string _id PK
         string studentId FK
-        string lectureId FK
+        string lectureId FK "ссылка на documents"
         boolean isCompleted
         number completedAt
         number timeSpent
@@ -126,7 +104,7 @@ erDiagram
 
     COURSE_VIEWS {
         string _id PK
-        string courseId FK
+        string courseId FK "ссылка на documents"
         string viewerId FK
         number viewedAt
         string userAgent
@@ -140,21 +118,20 @@ erDiagram
     }
 
     %% Связи между таблицами
-    DOCUMENTS ||--o{ DOCUMENTS : "parentDocument"
-    COURSES ||--o{ LECTURES : "courseId"
+    DOCUMENTS ||--o{ DOCUMENTS : "parentDocument (курс->лекции)"
     STUDENTS ||--o{ STUDENT_COLLECTIONS : "studentId"
     STUDENT_COLLECTIONS ||--o{ COLLECTION_LECTURES : "collectionId"
-    LECTURES ||--o{ COLLECTION_LECTURES : "lectureId"
+    DOCUMENTS ||--o{ COLLECTION_LECTURES : "lectureId"
     STUDENTS ||--o{ COURSE_ENROLLMENTS : "studentId"
-    COURSES ||--o{ COURSE_ENROLLMENTS : "courseId"
+    DOCUMENTS ||--o{ COURSE_ENROLLMENTS : "courseId"
     STUDENTS ||--o{ LECTURE_PROGRESS : "studentId"
-    LECTURES ||--o{ LECTURE_PROGRESS : "lectureId"
-    COURSES ||--o{ COURSE_VIEWS : "courseId"
+    DOCUMENTS ||--o{ LECTURE_PROGRESS : "lectureId"
+    DOCUMENTS ||--o{ COURSE_VIEWS : "courseId"
     STUDENTS ||--o{ COURSE_VIEWS : "viewerId"
     STUDENTS ||--o{ DICTIONARY : "userId"
 ```
 
-## Поток данных в системе
+## Поток данных в системе (ОБНОВЛЕННЫЙ)
 
 ```mermaid
 sequenceDiagram
@@ -164,39 +141,39 @@ sequenceDiagram
     participant D as Database
     participant E as External
 
-    %% Редактор создает курс
+    %% Редактор создает курс (уже реализовано)
     U->>F: Создать курс
-    F->>C: courses.create()
-    C->>D: INSERT courses
+    F->>C: documents.create() (parentDocument=null)
+    C->>D: INSERT documents
     D-->>C: course_id
     C-->>F: course_data
     F-->>U: Курс создан
 
-    %% Редактор добавляет лекцию
+    %% Редактор добавляет лекцию (уже реализовано)
     U->>F: Добавить лекцию
-    F->>C: lectures.create()
-    C->>D: INSERT lectures
+    F->>C: documents.create() (parentDocument=courseId)
+    C->>D: INSERT documents
     D-->>C: lecture_id
     C-->>F: lecture_data
     F-->>U: Лекция добавлена
 
-    %% Редактор публикует курс
+    %% Редактор публикует курс (уже реализовано)
     U->>F: Опубликовать курс
-    F->>C: courses.togglePublish()
-    C->>D: UPDATE courses
+    F->>C: documents.update() (isPublished=true)
+    C->>D: UPDATE documents
     D-->>C: success
     C-->>F: updated_course
     F-->>U: Курс опубликован
 
-    %% Гость просматривает курсы
+    %% Гость просматривает курсы (новый функционал)
     U->>F: Просмотр курсов
-    F->>C: courses.getPublished()
-    C->>D: SELECT courses
+    F->>C: education.getPublishedCourses()
+    C->>D: SELECT documents WHERE parentDocument=null AND isPublished=true
     D-->>C: courses_list
     C-->>F: courses_data
     F-->>U: Список курсов
 
-    %% Студент создает коллекцию
+    %% Студент создает коллекцию (новый функционал)
     U->>F: Создать коллекцию
     F->>C: students.createCollection()
     C->>D: INSERT student_collections
@@ -204,7 +181,7 @@ sequenceDiagram
     C-->>F: collection_data
     F-->>U: Коллекция создана
 
-    %% Студент добавляет лекцию в коллекцию
+    %% Студент добавляет лекцию в коллекцию (новый функционал)
     U->>F: Добавить лекцию в коллекцию
     F->>C: students.addLectureToCollection()
     C->>D: INSERT collection_lectures
@@ -213,25 +190,25 @@ sequenceDiagram
     F-->>U: Лекция добавлена
 ```
 
-## Модули и их взаимодействие
+## Модули и их взаимодействие (ОБНОВЛЕННОЕ)
 
 ```mermaid
 graph LR
-    subgraph "Editor Module"
-        A1[Course Creator]
-        A2[Lecture Editor]
-        A3[Content Manager]
-        A4[Analytics Dashboard]
+    subgraph "Editor Module - УЖЕ РЕАЛИЗОВАН"
+        A1[Document Creator]
+        A2[BlockNote Editor]
+        A3[Document Manager]
+        A4[Publish/Archive]
     end
 
-    subgraph "Public Module"
+    subgraph "Public Module - НОВЫЙ"
         B1[Course Catalog]
         B2[Lecture Viewer]
         B3[Search & Filter]
         B4[Guest Access]
     end
 
-    subgraph "Student Module"
+    subgraph "Student Module - НОВЫЙ"
         C1[Profile Management]
         C2[Collection Builder]
         C3[Progress Tracker]
@@ -255,48 +232,50 @@ graph LR
     C3 --> D2
 ```
 
-## Поток аутентификации (ИСПРАВЛЕННЫЙ)
+## Поток аутентификации (ОБНОВЛЕННЫЙ)
 
 ```mermaid
 flowchart TD
     A[Пользователь] --> B{Тип пользователя?}
 
-    B -->|Редактор| C[Editor Module]
-    B -->|Студент| D[Student Module]
-    B -->|Гость| E[Public Module]
+    B -->|Редактор| C[Editor Module - УЖЕ РЕАЛИЗОВАН]
+    B -->|Студент| D[Student Module - НОВЫЙ]
+    B -->|Гость| E[Public Module - НОВЫЙ]
 
-    C --> F[Создание курсов]
-    C --> G[Редактирование лекций]
+    C --> F[Создание документов]
+    C --> G[Редактирование с BlockNote]
     C --> H[Управление контентом]
+    C --> I[Публикация/архивация]
 
-    D --> I[Профиль студента]
-    D --> J[Мои коллекции]
-    D --> K[Прогресс обучения]
-    D --> L[Просмотр курсов]
-    D --> M[Чтение лекций]
-    D --> N[Поиск контента]
+    D --> J[Профиль студента]
+    D --> K[Мои коллекции]
+    D --> L[Прогресс обучения]
+    D --> M[Просмотр курсов]
+    D --> N[Чтение лекций]
+    D --> O[Поиск контента]
 
-    E --> L
     E --> M
     E --> N
+    E --> O
 
-    F --> O[Convex Backend]
-    G --> O
-    H --> O
-    I --> O
-    J --> O
-    K --> O
-    L --> O
-    M --> O
-    N --> O
+    F --> P[Convex Backend]
+    G --> P
+    H --> P
+    I --> P
+    J --> P
+    K --> P
+    L --> P
+    M --> P
+    N --> P
+    O --> P
 
     %% Показываем что студент имеет доступ к функциям гостя
-    D -.->|Доступ к| L
     D -.->|Доступ к| M
     D -.->|Доступ к| N
+    D -.->|Доступ к| O
 ```
 
-## Иерархия доступа пользователей
+## Иерархия доступа пользователей (ОБНОВЛЕННАЯ)
 
 ```mermaid
 graph TB
@@ -305,14 +284,14 @@ graph TB
         B --> C[Редактор]
     end
 
-    subgraph "Функции гостя"
-        D[Просмотр курсов]
-        E[Чтение лекций]
+    subgraph "Функции гостя - НОВЫЕ"
+        D[Просмотр опубликованных курсов]
+        E[Чтение опубликованных лекций]
         F[Поиск контента]
-        G[Фильтрация]
+        G[Фильтрация по категориям]
     end
 
-    subgraph "Дополнительные функции студента"
+    subgraph "Дополнительные функции студента - НОВЫЕ"
         H[Создание профиля]
         I[Создание коллекций]
         J[Добавление лекций в коллекции]
@@ -320,11 +299,11 @@ graph TB
         L[Персональные настройки]
     end
 
-    subgraph "Функции редактора"
-        M[Создание курсов]
-        N[Редактирование лекций]
+    subgraph "Функции редактора - УЖЕ РЕАЛИЗОВАНЫ"
+        M[Создание документов-курсов]
+        N[Редактирование с BlockNote]
         O[Публикация контента]
-        P[Аналитика и статистика]
+        P[Архивация документов]
         Q[Управление файлами]
     end
 
@@ -378,7 +357,7 @@ graph TB
     end
 
     subgraph "Authorization Rules"
-        J[Course Owner Check]
+        J[Document Owner Check]
         K[Student Profile Check]
         L[Public Content Check]
         M[Collection Access Check]
@@ -393,24 +372,24 @@ graph TB
     I --> M
 ```
 
-## Процесс создания и изучения курса
+## Процесс создания и изучения курса (ОБНОВЛЕННЫЙ)
 
 ```mermaid
 flowchart LR
-    subgraph "Course Creation"
-        A1[Editor Login] --> A2[Create Course]
-        A2 --> A3[Add Lectures]
-        A3 --> A4[Edit Content]
+    subgraph "Course Creation - УЖЕ РЕАЛИЗОВАНО"
+        A1[Editor Login] --> A2[Create Document (Course)]
+        A2 --> A3[Add Child Documents (Lectures)]
+        A3 --> A4[Edit with BlockNote]
         A4 --> A5[Publish Course]
     end
 
-    subgraph "Course Discovery"
-        B1[Guest Access] --> B2[Browse Courses]
+    subgraph "Course Discovery - НОВЫЙ"
+        B1[Guest Access] --> B2[Browse Published Courses]
         B2 --> B3[View Course Details]
-        B3 --> B4[Read Lectures]
+        B3 --> B4[Read Published Lectures]
     end
 
-    subgraph "Student Learning"
+    subgraph "Student Learning - НОВЫЙ"
         C1[Student Login] --> C2[Create Collection]
         C2 --> C3[Add Lectures to Collection]
         C3 --> C4[Study Progress]
@@ -429,13 +408,13 @@ graph TB
     subgraph "Client Side"
         A[Next.js App]
         B[React Components]
-        C[BlockNote Editor]
+        C[BlockNote Editor - УЖЕ РЕАЛИЗОВАН]
         D[Tailwind CSS]
     end
 
     subgraph "Server Side"
         E[Convex Functions]
-        F[Database]
+        F[Database - Documents]
         G[File Storage]
         H[Auth Service]
     end
@@ -457,7 +436,7 @@ graph TB
     A --> K
 ```
 
-## Матрица доступа пользователей
+## Матрица доступа пользователей (ОБНОВЛЕННАЯ)
 
 ```mermaid
 graph LR
@@ -467,14 +446,14 @@ graph LR
         C[Поиск контента]
         D[Создание коллекций]
         E[Отслеживание прогресса]
-        F[Создание курсов]
-        G[Редактирование лекций]
+        F[Создание документов]
+        G[Редактирование с BlockNote]
         H[Публикация контента]
     end
 
     subgraph "Гость"
-        I[✓ Просмотр]
-        J[✓ Чтение]
+        I[✓ Просмотр опубликованных]
+        J[✓ Чтение опубликованных]
         K[✓ Поиск]
         L[✗ Коллекции]
         M[✗ Прогресс]
@@ -484,8 +463,8 @@ graph LR
     end
 
     subgraph "Студент"
-        Q[✓ Просмотр]
-        R[✓ Чтение]
+        Q[✓ Просмотр опубликованных]
+        R[✓ Чтение опубликованных]
         S[✓ Поиск]
         T[✓ Коллекции]
         U[✓ Прогресс]
@@ -495,8 +474,8 @@ graph LR
     end
 
     subgraph "Редактор"
-        Y[✓ Просмотр]
-        Z[✓ Чтение]
+        Y[✓ Просмотр всех]
+        Z[✓ Чтение всех]
         AA[✓ Поиск]
         BB[✓ Коллекции]
         CC[✓ Прогресс]
@@ -536,4 +515,28 @@ graph LR
     H --> P
     H --> X
     H --> FF
+```
+
+## Структура документов в системе
+
+```mermaid
+graph TD
+    subgraph "Иерархия документов"
+        A[Корневые документы - КУРСЫ] --> B[Вложенные документы - ЛЕКЦИИ]
+        B --> C[Вложенные документы - ПОДЛЕКЦИИ]
+    end
+
+    subgraph "Пример структуры"
+        D[Курс: "Основы программирования"] --> E[Лекция 1: "Введение в Python"]
+        D --> F[Лекция 2: "Переменные и типы данных"]
+        D --> G[Лекция 3: "Условия и циклы"]
+        E --> H[Подлекция 1.1: "Установка Python"]
+        E --> I[Подлекция 1.2: "Первая программа"]
+    end
+
+    subgraph "Поля документов"
+        J[Общие поля: title, userId, isArchived, isPublished]
+        K[Поля курсов: description, category, difficulty, tags]
+        L[Поля лекций: order, duration, attachments]
+    end
 ```
